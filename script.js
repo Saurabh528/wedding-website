@@ -461,6 +461,51 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize background music with fade in/out
     initBackgroundMusic();
     
+    // Add prayer invitation click handler (clickbait to start music)
+    const prayerInvitation = document.getElementById('prayer-invitation');
+    if (prayerInvitation) {
+        prayerInvitation.addEventListener('click', () => {
+            const audio = document.getElementById('background-music');
+            if (audio && (audio.paused || !musicStarted)) {
+                audio.muted = false;
+                audio.play().then(() => {
+                    console.log('Music started via prayer invitation click');
+                    musicStarted = true;
+                    
+                    // Start fade in
+                    const maxVolume = 0.5;
+                    const fadeInDuration = 1;
+                    const fadeInInterval = setInterval(() => {
+                        if (audio.volume < maxVolume) {
+                            audio.volume = Math.min(audio.volume + (maxVolume / (fadeInDuration * 10)), maxVolume);
+                        } else {
+                            clearInterval(fadeInInterval);
+                        }
+                    }, 100);
+                    
+                    // Hide the invitation after starting
+                    prayerInvitation.classList.add('played');
+                    setTimeout(() => {
+                        prayerInvitation.style.display = 'none';
+                    }, 1000);
+                    
+                    // Update control button state
+                    const musicControlBtn = document.getElementById('music-control-btn');
+                    if (musicControlBtn) {
+                        musicControlBtn.classList.add('playing');
+                        musicControlBtn.classList.remove('paused');
+                        const playIcon = document.getElementById('play-icon');
+                        const pauseIcon = document.getElementById('pause-icon');
+                        if (playIcon) playIcon.style.display = 'none';
+                        if (pauseIcon) pauseIcon.style.display = 'block';
+                    }
+                }).catch(err => {
+                    console.error('Error starting music:', err);
+                });
+            }
+        });
+    }
+    
     // Add music control button (play/pause toggle)
     const musicControlBtn = document.getElementById('music-control-btn');
     const playIcon = document.getElementById('play-icon');
@@ -745,6 +790,11 @@ function initBackgroundMusic() {
     const tryPlay = () => {
         console.log('Attempting to play audio (muted for autoplay)...');
         
+        // Ensure audio is ready
+        if (audio.readyState < 2) {
+            audio.load();
+        }
+        
         // Try to play muted first (browsers allow muted autoplay)
         const playPromise = audio.play();
         if (playPromise !== undefined) {
@@ -754,46 +804,49 @@ function initBackgroundMusic() {
                     console.log('Audio playing (muted), unmuting and starting fade in...');
                     musicStarted = true;
                     
-                    // Unmute after a short delay to ensure playback started
-                    setTimeout(() => {
-                        audio.muted = false;
-                        fadeIn();
-                        console.log('Audio unmuted and fading in');
-                        
-                        // Update control button state
-                        const musicControlBtn = document.getElementById('music-control-btn');
-                        if (musicControlBtn) {
-                            musicControlBtn.classList.add('playing');
-                            musicControlBtn.classList.remove('paused');
-                            const playIcon = document.getElementById('play-icon');
-                            const pauseIcon = document.getElementById('pause-icon');
-                            if (playIcon) playIcon.style.display = 'none';
-                            if (pauseIcon) pauseIcon.style.display = 'block';
-                        }
-                    }, 500);
+                    // Unmute immediately and fade in
+                    audio.muted = false;
+                    fadeIn();
+                    console.log('Audio unmuted and fading in');
+                    
+                    // Update control button state
+                    const musicControlBtn = document.getElementById('music-control-btn');
+                    if (musicControlBtn) {
+                        musicControlBtn.classList.add('playing');
+                        musicControlBtn.classList.remove('paused');
+                        const playIcon = document.getElementById('play-icon');
+                        const pauseIcon = document.getElementById('pause-icon');
+                        if (playIcon) playIcon.style.display = 'none';
+                        if (pauseIcon) pauseIcon.style.display = 'block';
+                    }
                 })
                 .catch(error => {
                     // Even muted autoplay was prevented, wait for user interaction
                     console.log('Autoplay prevented (even muted). Music will start after user interaction.', error);
                     audio.muted = false; // Reset mute state
                     
-                    // Add listeners for multiple interaction types
-                    document.addEventListener('click', startMusic, { once: true, capture: true });
-                    document.addEventListener('touchstart', startMusic, { once: true, capture: true });
-                    document.addEventListener('scroll', startMusic, { once: true, capture: true });
-                    document.addEventListener('keydown', startMusic, { once: true, capture: true });
-                    document.addEventListener('mousemove', startMusic, { once: true, capture: true });
-                    document.addEventListener('pointerdown', startMusic, { once: true, capture: true });
-                    window.addEventListener('focus', startMusic, { once: true });
+                    // Add listeners for multiple interaction types - make them more aggressive
+                    const startOnInteraction = (e) => {
+                        if (!musicStarted || audio.paused) {
+                            startMusic(e);
+                        }
+                    };
+                    
+                    document.addEventListener('click', startOnInteraction, { capture: true });
+                    document.addEventListener('touchstart', startOnInteraction, { capture: true });
+                    document.addEventListener('scroll', startOnInteraction, { capture: true });
+                    document.addEventListener('keydown', startOnInteraction, { capture: true });
+                    document.addEventListener('mousemove', startOnInteraction, { capture: true });
+                    document.addEventListener('pointerdown', startOnInteraction, { capture: true });
+                    document.addEventListener('wheel', startOnInteraction, { capture: true });
+                    window.addEventListener('focus', startOnInteraction);
                 });
         } else {
             // Fallback: try direct play
             audio.play().then(() => {
                 musicStarted = true;
-                setTimeout(() => {
-                    audio.muted = false;
-                    fadeIn();
-                }, 500);
+                audio.muted = false;
+                fadeIn();
             }).catch(() => {
                 audio.muted = false;
             });
@@ -803,27 +856,64 @@ function initBackgroundMusic() {
     // Preload the audio
     audio.preload = 'auto';
     
-    // Wait for audio to be ready
+    // Add user interaction listeners (will start music on ANY interaction)
+    const startOnInteraction = (e) => {
+        if (!musicStarted || audio.paused) {
+            console.log('User interaction detected:', e.type);
+            audio.muted = false;
+            startMusic(e);
+        }
+    };
+    
+    // Add listeners for multiple interaction types
+    document.addEventListener('click', startOnInteraction, { once: false, capture: true });
+    document.addEventListener('touchstart', startOnInteraction, { once: false, capture: true });
+    document.addEventListener('scroll', startOnInteraction, { once: false, capture: true });
+    document.addEventListener('keydown', startOnInteraction, { once: false, capture: true });
+    document.addEventListener('mousemove', startOnInteraction, { once: false, capture: true });
+    document.addEventListener('pointerdown', startOnInteraction, { once: false, capture: true });
+    document.addEventListener('wheel', startOnInteraction, { once: false, capture: true });
+    window.addEventListener('focus', startOnInteraction, { once: false });
+    
+    // Wait for audio to be ready and try multiple times
+    const attemptAutoplay = () => {
+        if (!musicStarted || audio.paused) {
+            tryPlay();
+        }
+    };
+    
     audio.addEventListener('loadeddata', () => {
-        console.log('Audio loaded, duration:', audio.duration);
-        tryPlay();
+        console.log('📻 Audio loaded, duration:', audio.duration);
+        attemptAutoplay();
     });
     
     audio.addEventListener('canplay', () => {
-        console.log('Audio can play');
+        console.log('📻 Audio can play, attempting autoplay...');
+        attemptAutoplay();
+    });
+    
+    audio.addEventListener('canplaythrough', () => {
+        console.log('📻 Audio can play through, attempting autoplay...');
+        attemptAutoplay();
     });
     
     audio.addEventListener('error', (e) => {
-        console.error('Audio error:', e);
+        console.error('❌ Audio error:', e);
         console.error('Audio error details:', audio.error);
     });
     
-    // Also try immediately if audio is already loaded
+    // Try immediately if audio is already loaded
     if (audio.readyState >= 2) {
-        console.log('Audio already loaded, trying to play...');
-        tryPlay();
+        console.log('📻 Audio already loaded (readyState:', audio.readyState, '), trying to play...');
+        setTimeout(attemptAutoplay, 100);
     }
     
-    // Force load the audio
+    // Also try after delays to catch different loading states
+    setTimeout(attemptAutoplay, 300);
+    setTimeout(attemptAutoplay, 800);
+    setTimeout(attemptAutoplay, 1500);
+    setTimeout(attemptAutoplay, 2500);
+    
+    // Force load the audio immediately
     audio.load();
 }

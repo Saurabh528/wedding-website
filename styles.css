@@ -452,8 +452,51 @@ body {
     font-family: 'Dancing Script', 'Great Vibes', cursive;
     font-size: 1.8rem;
     margin-top: 1.5rem;
-    margin-bottom: 1.5rem;
+    margin-bottom: 0.5rem;
     font-style: normal;
+}
+
+.hero-prayer-invitation {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 1rem 0;
+    cursor: pointer;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    opacity: 0.9;
+    padding: 0.5rem 1rem;
+    border-radius: 15px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(5px);
+}
+
+.hero-prayer-invitation:hover {
+    transform: scale(1.1);
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.prayer-emoji {
+    font-size: 2.5rem;
+    display: block;
+    animation: gentlePulse 2s ease-in-out infinite;
+}
+
+.prayer-text {
+    font-family: 'Dancing Script', 'Great Vibes', cursive;
+    font-size: 1.2rem;
+    color: var(--white);
+    text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.7);
+    font-weight: 500;
+    letter-spacing: 1px;
+}
+
+.hero-prayer-invitation.played {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 1s ease;
+}
     font-weight: 500;
     color: var(--white);
     text-shadow: 
