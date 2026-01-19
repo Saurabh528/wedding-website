@@ -283,10 +283,20 @@
     </footer>
 
     <!-- Background Music -->
-    <audio id="background-music" loop preload="auto">
+    <audio id="background-music" loop preload="auto" muted>
         <source src="assets/audio/kashi_vishwanath_gange.mp3" type="audio/mpeg">
         Your browser does not support the audio element.
     </audio>
+
+    <!-- Music Control Button (Play/Pause Toggle) -->
+    <button id="music-control-btn" class="music-control-button" aria-label="Toggle background music" title="Click to pause/play background music">
+        <svg id="play-icon" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M8 5v14l11-7z"/>
+        </svg>
+        <svg id="pause-icon" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" style="display: none;">
+            <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/>
+        </svg>
+    </button>
 
     <script src="script.js"></script>
 </body>

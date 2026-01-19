@@ -460,6 +460,52 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Initialize background music with fade in/out
     initBackgroundMusic();
+    
+    // Add music control button (play/pause toggle)
+    const musicControlBtn = document.getElementById('music-control-btn');
+    const playIcon = document.getElementById('play-icon');
+    const pauseIcon = document.getElementById('pause-icon');
+    const audio = document.getElementById('background-music');
+    
+    if (musicControlBtn && audio) {
+        // Update button state based on audio state
+        const updateButtonState = () => {
+            if (audio.paused) {
+                musicControlBtn.classList.remove('playing');
+                musicControlBtn.classList.add('paused');
+                if (playIcon) playIcon.style.display = 'block';
+                if (pauseIcon) pauseIcon.style.display = 'none';
+            } else {
+                musicControlBtn.classList.add('playing');
+                musicControlBtn.classList.remove('paused');
+                if (playIcon) playIcon.style.display = 'none';
+                if (pauseIcon) pauseIcon.style.display = 'block';
+            }
+        };
+        
+        // Toggle play/pause on button click
+        musicControlBtn.addEventListener('click', () => {
+            if (audio.paused) {
+                audio.play().then(() => {
+                    console.log('Music resumed via control button');
+                    updateButtonState();
+                }).catch(err => {
+                    console.error('Error resuming music:', err);
+                });
+            } else {
+                audio.pause();
+                console.log('Music paused via control button');
+                updateButtonState();
+            }
+        });
+        
+        // Listen to audio state changes
+        audio.addEventListener('play', updateButtonState);
+        audio.addEventListener('pause', updateButtonState);
+        
+        // Initial state
+        updateButtonState();
+    }
     if (countdownTimer) {
         countdownTimer.style.display = 'block';
         countdownTimer.style.visibility = 'visible';
@@ -556,7 +602,8 @@ function initBackgroundMusic() {
     const audio = document.getElementById('background-music');
     if (!audio) return;
     
-    // Set initial volume to 0 for fade in
+    // Start muted to allow autoplay (browsers allow muted autoplay)
+    audio.muted = true;
     audio.volume = 0;
     
     // Fade duration in seconds
@@ -634,28 +681,47 @@ function initBackgroundMusic() {
         }
     });
     
-    // Function to start music (called on user interaction)
+    // Function to start music (called on user interaction if autoplay fails)
     let musicStarted = false;
     const startMusic = (event) => {
-        if (musicStarted) return;
+        if (musicStarted && !audio.paused) return;
         
         console.log('User interaction detected, starting music...', event?.type);
         
+        // Ensure audio is not muted
+        audio.muted = false;
+        
         // Chrome requires audio.play() to be called directly from user gesture handler
         try {
+            // Ensure audio is loaded
+            if (audio.readyState < 2) {
+                audio.load();
+            }
+            
             const playPromise = audio.play();
             if (playPromise !== undefined) {
                 playPromise
                     .then(() => {
+                        console.log('Music started successfully, starting fade in...');
                         musicStarted = true;
                         fadeIn();
-                        console.log('Music started successfully');
+                        // Update control button state
+                        const musicControlBtn = document.getElementById('music-control-btn');
+                        if (musicControlBtn) {
+                            musicControlBtn.classList.add('playing');
+                            musicControlBtn.classList.remove('paused');
+                            const playIcon = document.getElementById('play-icon');
+                            const pauseIcon = document.getElementById('pause-icon');
+                            if (playIcon) playIcon.style.display = 'none';
+                            if (pauseIcon) pauseIcon.style.display = 'block';
+                        }
                         // Remove all listeners after successful start
                         document.removeEventListener('click', startMusic);
                         document.removeEventListener('touchstart', startMusic);
                         document.removeEventListener('scroll', startMusic);
                         document.removeEventListener('keydown', startMusic);
                         document.removeEventListener('mousemove', startMusic);
+                        document.removeEventListener('pointerdown', startMusic);
                         window.removeEventListener('focus', startMusic);
                     })
                     .catch(err => {
@@ -663,47 +729,74 @@ function initBackgroundMusic() {
                     });
             } else {
                 // Fallback: try direct play
-                audio.play();
-                musicStarted = true;
-                fadeIn();
+                audio.play().then(() => {
+                    musicStarted = true;
+                    fadeIn();
+                }).catch(err => {
+                    console.error('Direct play failed:', err);
+                });
             }
         } catch (err) {
             console.error('Error in startMusic:', err);
         }
     };
     
-    // Try to play on page load (may require user interaction due to browser policies)
+    // Try to play on page load (muted first, then unmute)
     const tryPlay = () => {
-        console.log('Attempting to play audio...');
+        console.log('Attempting to play audio (muted for autoplay)...');
+        
+        // Try to play muted first (browsers allow muted autoplay)
         const playPromise = audio.play();
         if (playPromise !== undefined) {
             playPromise
                 .then(() => {
-                    // Autoplay started, begin fade in
-                    console.log('Audio playing, starting fade in...');
+                    // Autoplay started (muted), now unmute and fade in
+                    console.log('Audio playing (muted), unmuting and starting fade in...');
                     musicStarted = true;
-                    fadeIn();
+                    
+                    // Unmute after a short delay to ensure playback started
+                    setTimeout(() => {
+                        audio.muted = false;
+                        fadeIn();
+                        console.log('Audio unmuted and fading in');
+                        
+                        // Update control button state
+                        const musicControlBtn = document.getElementById('music-control-btn');
+                        if (musicControlBtn) {
+                            musicControlBtn.classList.add('playing');
+                            musicControlBtn.classList.remove('paused');
+                            const playIcon = document.getElementById('play-icon');
+                            const pauseIcon = document.getElementById('pause-icon');
+                            if (playIcon) playIcon.style.display = 'none';
+                            if (pauseIcon) pauseIcon.style.display = 'block';
+                        }
+                    }, 500);
                 })
                 .catch(error => {
-                    // Autoplay was prevented, wait for user interaction
-                    console.log('Autoplay prevented. Music will start after user interaction.', error);
+                    // Even muted autoplay was prevented, wait for user interaction
+                    console.log('Autoplay prevented (even muted). Music will start after user interaction.', error);
+                    audio.muted = false; // Reset mute state
                     
-                    // Add listeners for multiple interaction types (Chrome needs this)
-                    // Use capture phase and make sure it's immediate
+                    // Add listeners for multiple interaction types
                     document.addEventListener('click', startMusic, { once: true, capture: true });
                     document.addEventListener('touchstart', startMusic, { once: true, capture: true });
                     document.addEventListener('scroll', startMusic, { once: true, capture: true });
                     document.addEventListener('keydown', startMusic, { once: true, capture: true });
                     document.addEventListener('mousemove', startMusic, { once: true, capture: true });
+                    document.addEventListener('pointerdown', startMusic, { once: true, capture: true });
                     window.addEventListener('focus', startMusic, { once: true });
                 });
         } else {
-            // Fallback: add listeners anyway
-            document.addEventListener('click', startMusic, { once: true });
-            document.addEventListener('touchstart', startMusic, { once: true });
-            document.addEventListener('scroll', startMusic, { once: true });
-            document.addEventListener('keydown', startMusic, { once: true });
-            document.addEventListener('mousemove', startMusic, { once: true });
+            // Fallback: try direct play
+            audio.play().then(() => {
+                musicStarted = true;
+                setTimeout(() => {
+                    audio.muted = false;
+                    fadeIn();
+                }, 500);
+            }).catch(() => {
+                audio.muted = false;
+            });
         }
     };
     

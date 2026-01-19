@@ -1948,6 +1948,41 @@ section {
     margin-top: 1rem;
 }
 
+/* Music Control Button (Play/Pause Toggle) */
+.music-control-button {
+    position: fixed;
+    bottom: 90px;
+    right: 30px;
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, var(--gold), var(--saffron));
+    color: var(--white);
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
+    opacity: 0.9;
+}
+
+.music-control-button:hover {
+    transform: translateY(-5px) scale(1.1);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+    opacity: 1;
+}
+
+.music-control-button.playing {
+    background: linear-gradient(135deg, var(--maroon), var(--deep-red));
+}
+
+.music-control-button.paused {
+    background: linear-gradient(135deg, var(--gold), var(--saffron));
+}
+
 /* Back to Top Button */
 .back-to-top {
     position: fixed;
