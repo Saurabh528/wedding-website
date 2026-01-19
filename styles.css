@@ -2066,6 +2066,22 @@ section {
         width: 45px;
         height: 45px;
     }
+    
+    .music-control-button {
+        bottom: 75px;
+        right: 20px;
+        width: 45px;
+        height: 45px;
+    }
+    
+    .events-section {
+        padding: 60px 0;
+    }
+    
+    .timeline {
+        padding: 1.5rem 0;
+        margin: 1rem;
+    }
 }
 
 /* Animations */
@@ -2233,18 +2249,67 @@ section {
     }
 
     .timeline-item {
-        flex-direction: row !important;
+        flex-direction: column !important;
+        align-items: flex-start !important;
         padding-left: 50px;
+        margin-bottom: 2rem;
     }
 
     .timeline-date {
-        flex: 0 0 120px;
-        font-size: 0.9rem;
-        padding: 0.5rem;
+        flex: 0 0 auto;
+        width: 100%;
+        max-width: 200px;
+        font-size: 0.95rem;
+        padding: 0.75rem;
+        margin-bottom: 1rem;
+        text-align: left;
     }
 
     .timeline-content {
-        margin: 0 0 0 1rem;
+        margin: 0;
+        width: 100%;
+        padding: 1.5rem;
+    }
+    
+    .timeline-content h3 {
+        font-size: 2rem;
+    }
+    
+    .timeline-time {
+        font-size: 1.2rem;
+    }
+    
+    .timeline-location {
+        font-size: 1rem;
+    }
+    
+    .family-info {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+        padding: 0 1rem;
+        margin-top: 2rem;
+    }
+    
+    .family-card {
+        width: 100%;
+        max-width: 100%;
+        margin: 0 auto;
+    }
+    
+    .family-card-content {
+        padding: 2rem 1.5rem;
+    }
+    
+    .family-card h3 {
+        font-size: 2.2rem;
+    }
+    
+    .family-member {
+        font-size: 1.1rem;
+    }
+    
+    .family-member strong {
+        font-size: 1.5rem;
     }
 
     .venue-grid {
