@@ -467,6 +467,8 @@ document.addEventListener('DOMContentLoaded', () => {
         prayerInvitation.addEventListener('click', () => {
             const audio = document.getElementById('background-music');
             if (audio && (audio.paused || !musicStarted)) {
+                // Reset manual pause flag when user clicks prayer invitation
+                window.userManuallyPaused = false;
                 audio.muted = false;
                 audio.play().then(() => {
                     console.log('Music started via prayer invitation click');
@@ -512,6 +514,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const pauseIcon = document.getElementById('pause-icon');
     const audio = document.getElementById('background-music');
     
+    // Access userManuallyPaused from the music initialization scope
+    // We'll set it in the global scope or pass it through
     if (musicControlBtn && audio) {
         // Update button state based on audio state
         const updateButtonState = () => {
@@ -529,8 +533,11 @@ document.addEventListener('DOMContentLoaded', () => {
         };
         
         // Toggle play/pause on button click
-        musicControlBtn.addEventListener('click', () => {
+        musicControlBtn.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent triggering other click listeners
             if (audio.paused) {
+                // User wants to play - reset manual pause flag
+                window.userManuallyPaused = false;
                 audio.play().then(() => {
                     console.log('Music resumed via control button');
                     updateButtonState();
@@ -538,6 +545,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     console.error('Error resuming music:', err);
                 });
             } else {
+                    // User wants to pause - set manual pause flag
+                window.userManuallyPaused = true;
                 audio.pause();
                 console.log('Music paused via control button');
                 updateButtonState();
@@ -561,6 +570,82 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
         console.error('Countdown timer element not found!');
     }
+    
+    // Handle video play/pause - pause background music when video plays
+    const setupVideoMusicControl = () => {
+        const weddingVideo = document.querySelector('.wedding-video');
+        const backgroundAudio = document.getElementById('background-music');
+        
+        if (!weddingVideo || !backgroundAudio) {
+            console.error('Video or audio element not found:', { weddingVideo, backgroundAudio });
+            return;
+        }
+        
+        // Store if music was playing before video started
+        let musicWasPlayingBeforeVideo = false;
+        
+        // Function to pause background music
+        const pauseBackgroundMusic = () => {
+            if (!backgroundAudio.paused) {
+                musicWasPlayingBeforeVideo = true;
+                backgroundAudio.pause();
+                console.log('Background music paused because video started playing');
+                
+                // Update music control button state
+                const musicControlBtn = document.getElementById('music-control-btn');
+                if (musicControlBtn) {
+                    musicControlBtn.classList.remove('playing');
+                    musicControlBtn.classList.add('paused');
+                    const playIcon = document.getElementById('play-icon');
+                    const pauseIcon = document.getElementById('pause-icon');
+                    if (playIcon) playIcon.style.display = 'block';
+                    if (pauseIcon) pauseIcon.style.display = 'none';
+                }
+            }
+        };
+        
+        // Function to resume background music (if it was playing before)
+        const resumeBackgroundMusic = () => {
+            if (musicWasPlayingBeforeVideo && backgroundAudio.paused && !weddingVideo.paused) {
+                // Don't auto-resume, let user or interaction listeners handle it
+                musicWasPlayingBeforeVideo = false;
+                console.log('Video paused - background music can now play on user interaction');
+            }
+        };
+        
+        // Pause background music when video starts playing
+        weddingVideo.addEventListener('play', pauseBackgroundMusic, { capture: true });
+        weddingVideo.addEventListener('playing', pauseBackgroundMusic, { capture: true });
+        
+        // Monitor video play state periodically (fallback)
+        let videoPlayCheckInterval = setInterval(() => {
+            if (!weddingVideo.paused && !backgroundAudio.paused) {
+                pauseBackgroundMusic();
+            }
+        }, 500);
+        
+        // When video pauses or ends, allow music to resume
+        weddingVideo.addEventListener('pause', () => {
+            musicWasPlayingBeforeVideo = false;
+            console.log('Video paused - background music can play on user interaction');
+        });
+        
+        weddingVideo.addEventListener('ended', () => {
+            musicWasPlayingBeforeVideo = false;
+            console.log('Video ended - background music can play on user interaction');
+            if (videoPlayCheckInterval) {
+                clearInterval(videoPlayCheckInterval);
+            }
+        });
+        
+        // Store video reference globally for interaction listeners
+        window.weddingVideo = weddingVideo;
+    };
+    
+    // Setup video music control (try immediately and after a delay)
+    setupVideoMusicControl();
+    setTimeout(setupVideoMusicControl, 500);
+    setTimeout(setupVideoMusicControl, 1500);
 });
 
 // Add parallax effect to hero section (disabled to prevent timer clipping)
@@ -728,7 +813,17 @@ function initBackgroundMusic() {
     
     // Function to start music (called on user interaction if autoplay fails)
     let musicStarted = false;
+    window.userManuallyPaused = false; // Track if user manually paused (global scope)
     const startMusic = (event) => {
+        // Don't restart if user manually paused
+        if (window.userManuallyPaused) return;
+        
+        // Don't start music if video is currently playing
+        const weddingVideo = window.weddingVideo || document.querySelector('.wedding-video');
+        if (weddingVideo && !weddingVideo.paused) {
+            return; // Video is playing, don't start music
+        }
+        
         if (musicStarted && !audio.paused) return;
         
         console.log('User interaction detected, starting music...', event?.type);
@@ -749,6 +844,7 @@ function initBackgroundMusic() {
                     .then(() => {
                         console.log('Music started successfully, starting fade in...');
                         musicStarted = true;
+                        window.userManuallyPaused = false; // Reset manual pause flag
                         fadeIn();
                         // Update control button state
                         const musicControlBtn = document.getElementById('music-control-btn');
@@ -776,6 +872,7 @@ function initBackgroundMusic() {
                 // Fallback: try direct play
                 audio.play().then(() => {
                     musicStarted = true;
+                    window.userManuallyPaused = false; // Reset manual pause flag
                     fadeIn();
                 }).catch(err => {
                     console.error('Direct play failed:', err);
@@ -858,6 +955,15 @@ function initBackgroundMusic() {
     
     // Add user interaction listeners (will start music on ANY interaction)
     const startOnInteraction = (e) => {
+        // Don't restart if user manually paused
+        if (window.userManuallyPaused) return;
+        
+        // Don't start music if video is currently playing
+        const weddingVideo = window.weddingVideo || document.querySelector('.wedding-video');
+        if (weddingVideo && !weddingVideo.paused) {
+            return; // Video is playing, don't start music
+        }
+        
         if (!musicStarted || audio.paused) {
             console.log('User interaction detected:', e.type);
             audio.muted = false;

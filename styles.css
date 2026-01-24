@@ -1155,6 +1155,41 @@ section {
     z-index: 1;
 }
 
+/* Wedding Invitation Video */
+.wedding-video-container {
+    margin-top: 4rem;
+    margin-bottom: 2rem;
+    padding: 0 1rem;
+    position: relative;
+    z-index: 1;
+}
+
+.wedding-video-wrapper {
+    max-width: 900px;
+    margin: 0 auto;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 
+        0 20px 60px rgba(139, 0, 0, 0.3),
+        0 0 0 3px rgba(255, 153, 51, 0.4),
+        inset 0 0 30px rgba(255, 255, 255, 0.3);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 248, 220, 0.95));
+    backdrop-filter: blur(15px);
+    padding: 15px;
+}
+
+.wedding-video {
+    width: 100%;
+    height: auto;
+    display: block;
+    border-radius: 15px;
+    background: var(--black);
+}
+
+.wedding-video::-webkit-media-controls-panel {
+    background-color: rgba(0, 0, 0, 0.7);
+}
+
 /* Events Section */
 .events-section {
     background: linear-gradient(135deg, var(--white) 0%, var(--light-gold) 50%, var(--cream) 100%);
@@ -1326,6 +1361,54 @@ section {
 
 .timeline-item.highlight .timeline-location {
     color: rgba(255, 255, 255, 0.9);
+}
+
+.timeline-map {
+    margin-top: 20px;
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    background: rgba(255, 255, 255, 0.9);
+}
+
+.timeline-map iframe {
+    width: 100%;
+    height: 250px;
+    border: none;
+    display: block;
+}
+
+.map-link {
+    display: inline-block;
+    margin-top: 10px;
+    padding: 8px 16px;
+    background: rgba(255, 153, 51, 0.1);
+    color: var(--saffron);
+    text-decoration: none;
+    border-radius: 8px;
+    font-family: 'Playfair Display', serif;
+    font-size: 0.95rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 153, 51, 0.3);
+}
+
+.map-link:hover {
+    background: rgba(255, 153, 51, 0.2);
+    color: var(--deep-red);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.timeline-item.highlight .map-link {
+    background: rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.9);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.timeline-item.highlight .map-link:hover {
+    background: rgba(255, 255, 255, 0.3);
+    color: var(--white);
 }
 
 /* Venue Section */
@@ -2281,6 +2364,35 @@ section {
     
     .timeline-location {
         font-size: 1rem;
+    }
+    
+    .timeline-map {
+        margin-top: 15px;
+        border-radius: 12px;
+    }
+    
+    .timeline-map iframe {
+        height: 200px;
+    }
+    
+    .map-link {
+        font-size: 0.85rem;
+        padding: 6px 12px;
+    }
+    
+    .wedding-video-container {
+        margin-top: 3rem;
+        margin-bottom: 1.5rem;
+        padding: 0 0.5rem;
+    }
+    
+    .wedding-video-wrapper {
+        padding: 10px;
+        border-radius: 15px;
+    }
+    
+    .wedding-video {
+        border-radius: 10px;
     }
     
     .family-info {
